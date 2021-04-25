@@ -1,6 +1,6 @@
 // Main.cpp
 //
-// This program is being used for the 2016_08 CS4953 REverse Engineering Project
+// This program is being used for the 2016_08 CS4953 Reverse Engineering Project
 // It encrypts or decrypts the input file based on the password
 //
 // The students are given an encrypted file that has the password embedded. The program, given an input file
@@ -8,6 +8,8 @@
 //
 // The task is to create the code to encrypt an arbitrary file, so that this specific decryption program succeeds.
 //
+
+#define _CRT_SECURE_NO_WARNINGS
 
 #include <windows.h>
 #include <stdio.h>
@@ -61,6 +63,72 @@ int encryptFile(FILE *fptr, char *password)
 	// INSERT ENCRYPTION CODE HERE
 	////////////////////////////////////////////////////////////////////////////////////
 
+	char* charPtr;
+
+	for (charPtr = buffer, i = 0; *charPtr != '\0'; charPtr++) {
+		// 4 op shift, OR
+
+		char a, b, c, d;
+		a = *charPtr;
+		b = *charPtr;
+		c = *charPtr;
+		d = *charPtr;
+
+
+		a = a << 4;
+		a &= 0x30;
+
+
+		b = b >> 4;
+		b &= 0x0C;
+
+
+		c &= 0x0C;
+		c = c >> 2;
+
+
+		d &= 0x30;
+		d = d << 2;
+
+		*charPtr = a | b | c | d;
+
+
+		// shift then sub add
+
+		a = *charPtr;
+		b = *charPtr;
+
+
+		a = a >> 7;
+		a &= 1;
+
+		b = b << 1;
+		*charPtr = a | b;
+
+
+		// hex swap
+		a = *charPtr;
+		b = *charPtr;
+
+		a = a << 4;
+		b = b >> 4;
+		b &= 0x0F;
+
+		*charPtr = a | b;
+
+		// even xor by 7b, else xor by 89
+		if (i > 0 && i % 2 == 0)
+			*charPtr = *charPtr ^ 0x7b;
+		else
+			*charPtr = *charPtr ^ 0x89;
+
+		i++;
+
+
+	}
+	
+
+
 	fptrOut = fopen("encrypted.txt", "wb+");
 	if(fptrOut == NULL)
 	{
@@ -72,6 +140,11 @@ int encryptFile(FILE *fptr, char *password)
 	////////////////////////////////////////////////////////////////////////////////////
 	// INSERT OUTPUT FILE WRITING CODE HERE
 	////////////////////////////////////////////////////////////////////////////////////
+
+	fwrite(pwdHash, sizeof(pwdHash), 1, fptrOut);
+	fwrite("\n", 1, 1, fptrOut);
+	fwrite(buffer, filesize, 1, fptrOut);
+
 
 	fclose(fptrOut);
 	return 0;
@@ -92,7 +165,7 @@ FILE *openInputFile(char *filename)
 	return fptr;
 } // openInputFile
 
-void main_Student(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	FILE *fptr;
 
@@ -107,9 +180,9 @@ void main_Student(int argc, char *argv[])
 	encryptFile(fptr, argv[2]);
 	fclose(fptr);
 
-	fptr = openInputFile("encrypted.txt");
-
-	decryptFile(fptr);
-	fclose(fptr);
-	return;
+//	fptr = openInputFile("encrypted.txt");
+//
+//	decryptFile(fptr);
+//	fclose(fptr);
+	return 0;
 } // main
