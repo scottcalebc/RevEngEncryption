@@ -17,6 +17,7 @@
 
 int sha256(char *fileName, char *dataBuffer, DWORD dataLength, unsigned char sha256sum[32]);
 
+
 // this function is actually the answer - when completed!
 int encryptFile(FILE *fptr, char *password)
 {
@@ -63,11 +64,18 @@ int encryptFile(FILE *fptr, char *password)
 	// INSERT ENCRYPTION CODE HERE
 	////////////////////////////////////////////////////////////////////////////////////
 
-	char* charPtr;
+	unsigned char* charPtr;
+	i = 1;
+	DWORD totalSize = sizeof(pwdHash) + filesize;
 
-	for (charPtr = buffer, i = 0; *charPtr != '\0'; charPtr++) {
+	BYTE pwdHashTwice[32];
+	sha256(NULL, (char *)pwdHash, sizeof(pwdHash), pwdHashTwice);
+
+
+	for (charPtr = (unsigned char *)buffer; *charPtr != '\0'; charPtr++) {
 		// 4 op shift, OR
-
+		printf("Encrypting byte %2x ", *charPtr);
+		char old = *charPtr;
 		char a, b, c, d;
 		a = *charPtr;
 		b = *charPtr;
@@ -117,13 +125,21 @@ int encryptFile(FILE *fptr, char *password)
 		*charPtr = a | b;
 
 		// even xor by 7b, else xor by 89
-		if (i > 0 && i % 2 == 0)
-			*charPtr = *charPtr ^ 0x7b;
-		else
-			*charPtr = *charPtr ^ 0x89;
+		if ((((charPtr - (unsigned char *)buffer + 1) - totalSize) & 2 ) == 0) {
+			// need to change to rehash ref
+			*charPtr = *charPtr ^ pwdHashTwice[20];
+			printf(" XOR'd by %2x, ", pwdHashTwice[20]);
+		}
+		else {
+			*charPtr = *charPtr ^ pwdHashTwice[11];
+			printf(" XOR'd by %2x, ", pwdHashTwice[11]);
+		}
 
 		i++;
 
+		printf("To byte %2x\n", *charPtr);
+		
+		printf("Old: %c New: %c\n", old, *charPtr);
 
 	}
 	
@@ -142,6 +158,7 @@ int encryptFile(FILE *fptr, char *password)
 	////////////////////////////////////////////////////////////////////////////////////
 
 	fwrite(pwdHash, sizeof(pwdHash), 1, fptrOut);
+	//fwrite(password, strlen(password), 1, fptrOut);
 	fwrite("\n", 1, 1, fptrOut);
 	fwrite(buffer, filesize, 1, fptrOut);
 
